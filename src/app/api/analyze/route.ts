@@ -70,7 +70,7 @@ ${jobDescription}`
     const analysis = JSON.parse(clean)
 
     // Save to DB
-    await supabase.from('analyses').insert({
+    const { error: insertError } = await supabase.from('analyses').insert({
       user_id: user.id,
       job_title: jobTitle || 'Untitled role',
       ats_score: analysis.ats_score,
@@ -79,10 +79,18 @@ ${jobDescription}`
       paid: paid || false,
     })
 
-    await supabase
+    if (insertError) {
+      console.error('Insert error:', insertError)
+    }
+
+    const { error: updateError } = await supabase
       .from('profiles')
       .update({ analyses_used: used + 1 })
       .eq('id', user.id)
+
+    if (updateError) {
+      console.error('Profile update error:', updateError)
+    }
 
     return NextResponse.json({ result: analysis })
 
